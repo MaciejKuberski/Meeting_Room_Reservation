@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h1>Modify room '{{room.0.1}}'<br></h1>
+<a href="http://127.0.0.1:8000">HOME</a><br>
+    <h2>{{message}}</h2>
+<h2>
+<p>
+    <input type="hidden" value="{{room.0.0}}" name="room_id_number">
+    Name: {{room.0.1}}<br>
+    Capacity: {{room.0.2}}<br>
+    Has Projector: {%if room.0.3%} Yes {%else%} No {%endif%}<br><br><br>
+    Please input new values. If you don't want certain values to change, please input the old value into that field.
+</p>
+</h2>
+
+<h2>
+    <p>
+    <form method="POST">
+        {%csrf_token%}
+        Change Room Name<br>
+        <input name="room_name" type="text"/><br>
+        Change Room Capacity<br>
+        <input name="room_capacity" type="number"><br>
+        Does the room have projector available?<br>
+        <select name="projector_available">
+            <option value="True">Yes</option>
+            <option value="False">No</option>
+        </select><br>
+        <a href="http://127.0.0.1:8000/room/list">
+            <input type="submit" value="Send"/>
+        </a>
+    </form>
+    </p>
+</h2>
+</body>
+</html>
