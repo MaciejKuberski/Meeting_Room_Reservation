@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.views import View
 from room_reserve_app.models import Room
@@ -15,11 +15,12 @@ class HomePage(View):
 class RoomList(View):
     def get(self,request):
         rooms = Room.objects.all().values_list()
-        ctx = {"rooms":rooms}
-        return render(request, "room-list.html", ctx)
-
-
-
+        if rooms:
+            ctx = {"rooms":rooms}
+            return render(request, "room-list.html", ctx)
+        else:
+            ctx = {"message": "No rooms available"}
+            return render(request, "room-list.html", ctx)
 
 
 class NewRoom(View):
@@ -44,4 +45,9 @@ class NewRoom(View):
                                "Wrong capacity (number needs to be positive, not higher than 32767)",)}
             return render(request, 'new-room.html', ctx)
 
+
+class DeleteRoom(View):
+    def get(self, request, room_id):
+        Room.objects.filter(pk=room_id).delete()
+        return redirect('http://127.0.0.1:8000/room/list')
 
