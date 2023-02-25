@@ -5,7 +5,22 @@
     <title>Title</title>
 </head>
 <body>
-List of Available Rooms<br>
+<h1>List of Available Rooms<br></h2>
 <a href="http://127.0.0.1:8000">HOME</a>
+
+<ol>
+    {%for room in rooms%}
+    <li>
+        <h3><a href="http://127.0.0.1:8000/room/{{room.pk}}">{{room.1}}</a></h3>
+        <ul>
+            <li>Room Capacity: {{room.2}}</li>
+            <li>{%if room.3%}Projector is AVAILABLE{%else%}Projector is UNAVAILABLE{%endif%}</li>
+            <li><button onclick="location.href = 'http://127.0.0.1:8000/room/modify/{{room.pk}}'">Edit</button>
+            <button onclick="location.href = 'http://127.0.0.1:8000/room/delete/{{room.pk}}'">Delete</button>
+            <button onclick="location.href = 'http://127.0.0.1:8000/room/reserve/{{room.pk}}'">Reserve</button></li>
+        </ul>
+    </li>
+    {%endfor%}
+</ol>
 </body>
 </html>

@@ -14,7 +14,12 @@ class HomePage(View):
 
 class RoomList(View):
     def get(self,request):
-        return render(request, 'room-list.html')
+        rooms = Room.objects.all().values_list()
+        ctx = {"rooms":rooms}
+        return render(request, "room-list.html", ctx)
+
+
+
 
 
 class NewRoom(View):
@@ -38,4 +43,5 @@ class NewRoom(View):
                    "reasons": ("Fields cannot be empty","Room with that name already exists",
                                "Wrong capacity (number needs to be positive, not higher than 32767)",)}
             return render(request, 'new-room.html', ctx)
+
 
