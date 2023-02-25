@@ -19,7 +19,7 @@ from room_reserve_app.views import HomePage, RoomList, NewRoom
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('home/', HomePage.as_view()),
-    path('home/room-list/', RoomList.as_view()),
-    path('home/add-new-room/', NewRoom.as_view()),
+    path('', HomePage.as_view()),
+    path('room/list/', RoomList.as_view()),
+    path('room/new/', NewRoom.as_view()),
 ]

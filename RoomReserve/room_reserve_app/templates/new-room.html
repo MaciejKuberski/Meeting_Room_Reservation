@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<header>
+    <h1>Create New Room</h1>
+    <h6><a href="http://127.0.0.1:8000">HOME</a></h6>
+</header>
+<main>
+    <h3>
+        {{message}}
+        {%for reason in reasons%}
+        <ul>
+            <li>{{reason}}</li>
+        </ul>
+        {%endfor%}
+    </h3>
+    <form method="POST">
+        {%csrf_token%}
+        Room Name<br>
+        <input name="room_name" type="text"/><br>
+        Room Capacity<br>
+        <input name="room_capacity" type="number"><br>
+        Does the room have projector available?<br>
+        <select name="projector_available">
+            <option value="True">Yes</option>
+            <option value="False">No</option>
+        </select><br>
+        <label>
+            <input type="submit" value="Wyślij"/>
+        </label>
+    </form>
+</main>
+
+</body>
+</html>
