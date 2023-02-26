@@ -6,9 +6,11 @@
 </head>
 <body>
 <h1>Modify room '{{room.0.1}}'<br></h1>
-    <h6><a href="http://127.0.0.1:8000">HOME</a></h6>
-    <h6><a href="http://127.0.0.1:8000/room/list">Rooms List</a></h6>
-    <h6><a href="http://127.0.0.1:8000/room/new">Create New Room</a></h6>
+    <h6>
+        <a href="http://127.0.0.1:8000">HOME</a>&nbsp;
+        <a href="http://127.0.0.1:8000/room/list">Rooms List</a>&nbsp;
+        <a href="http://127.0.0.1:8000/room/new">Create New Room</a>&nbsp;
+    </h6>
     <h2>{{message}}</h2>
 <h2>
 <p>
@@ -33,9 +35,9 @@
             <option value="True">Yes</option>
             <option value="False">No</option>
         </select><br>
-        <a href="http://127.0.0.1:8000/room/list">
-            <input type="submit" value="Send"/>
-        </a>
+
+            <input type="submit" value="Submit"/>
+
     </form>
     </p>
 </h2>

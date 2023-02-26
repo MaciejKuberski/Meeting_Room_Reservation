@@ -3,36 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <style>
+        table, th, td {
+          border: 1px solid black;
+          border-collapse: collapse;
+        }
+    </style>
 </head>
 <body>
     <h1>List of Available Rooms</h1>
-    <h6><a href="http://127.0.0.1:8000">HOME</a></h6>
-    <h6><a href="http://127.0.0.1:8000/room/list">Rooms List</a></h6>
-    <h6><a href="http://127.0.0.1:8000/room/new">Create New Room</a></h6>
-
+    <h6>
+        <a href="http://127.0.0.1:8000">HOME</a>&nbsp;
+        <a href="http://127.0.0.1:8000/room/list">Rooms List</a>&nbsp;
+        <a href="http://127.0.0.1:8000/room/new">Create New Room</a>&nbsp;
+    </h6>
+    {%for msg in messages%}
+    {{msg}}
+    {%endfor%}
     <h2>{{message}}</h2>
 
-    <ol>
+    <table>
+        <tr>
+            <th>Room Name</th>
+            <th>Room Capacity</th>
+            <th>Projector</th>
+            <th>Is room available today?</th>
+            <th>Reserve</th>
+            <th>Edit</th>
+            <th>Delete</th>
+        </tr>
         {% for room in rooms %}
-            <li>
-                <h3><a href="http://127.0.0.1:8000/room/{{room.pk}}">{{room.1}}</a></h3>
-                <ul>
-                    <li>Room Capacity: {{room.2}}</li>
-                    <li>
-                        {% if room.3 %}
-                            Projector is AVAILABLE
-                        {% else %}
-                            Projector is UNAVAILABLE
-                        {% endif %}
-                    </li>
-                    <li>
-                        <button onclick="location.href='http://127.0.0.1:8000/room/modify/{{room.0}}'">Edit</button>
-                        <button onclick="location.href='http://127.0.0.1:8000/room/delete/{{room.0}}'">Delete</button>
-                        <button onclick="location.href='http://127.0.0.1:8000/room/reserve/{{room.0}}'">Reserve</button>
-                    </li>
-                </ul>
-            </li>
+            <tr>
+                <td><a href="http://127.0.0.1:8000/room/show/{{room.0}}">{{room.1}}</a></td>
+                <td>{{room.2}}</td>
+                <td>
+                    {% if room.3 %}
+                        Yes
+                    {% else %}
+                        No
+                    {% endif %}
+                </td>
+                <td>
+                    {% with room_id=room.0 %}
+                        {%if room_id in room_booking_dict%}
+                            {%for key, val in room_booking_dict.items %}
+                                {%if key == room_id%}
+                                    {%if today in val%}
+                                    No
+                                    {%else%}
+                                    Yes
+                                    {%endif%}
+                                {%endif%}
+                            {%endfor%}
+                        {%else%}
+                        Yes
+                        {%endif%}
+                    {% endwith %}
+                </td>
+                <td><button onclick="location.href='http://127.0.0.1:8000/room/reserve/{{room.0}}'">Reserve</button></td>
+                <td><button onclick="location.href='http://127.0.0.1:8000/room/modify/{{room.0}}'">Edit</button></td>
+                <td><button onclick="location.href='http://127.0.0.1:8000/room/delete/{{room.0}}'">Delete</button></td>
+            </tr>
         {% endfor %}
-    </ol>
+    </table>
 </body>
 </html>

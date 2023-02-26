@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import UniqueConstraint
+from django.db.models.functions import Lower
 
 # Create your models here.
 class Room(models.Model):
@@ -13,5 +15,9 @@ class ReserveRoom(models.Model):
     comment = models.CharField(max_length=255, null=True)
 
     class Meta:
-        unique_together = ('room_id','date')
-
+        constraints = [
+            UniqueConstraint(
+                fields=[
+                    'room_id', 'date'
+                ],
+                name='unique_booking') ]

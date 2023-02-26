@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        table, th, td {
+          border: 1px solid black;
+          border-collapse: collapse;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Room '{{selected_room_name}}'</h1>
+    <h6>
+        <a href="http://127.0.0.1:8000">HOME</a>&nbsp;
+        <a href="http://127.0.0.1:8000/room/list">Rooms List</a>&nbsp;
+        <a href="http://127.0.0.1:8000/room/new">Create New Room</a>&nbsp;
+    </h6>
+</header>
+<main>
+    <h2>{{message}}</h2>
+
+    <h2>Room Information:
+    <h4>Room Capacity: {{selected_room_capacity}}</h4>
+    <h4>Projector is {% if selected_room_projector %}
+                            AVAILABLE
+                        {% else %}
+                            UNAVAILABLE
+                        {% endif %}</h4></h2>
+
+    <h2>Bookings for the next 7 days</h2>
+    <table>
+        <tr>
+            {%for day in next_seven_days%}
+            <th>
+                {{day|date:"d.m.Y"}}
+            </th>
+            {%endfor%}
+        </tr>
+        <tr>
+            {%for day in next_seven_days%}
+                <td>
+                    {% if day in booking_data_days %}
+                        X
+                    {% else %}
+                        &nbsp;
+                    {% endif %}
+                </td>
+            {%endfor%}
+        </tr>
+    </table>
+    <h6>X - the room is reserved on this day</h6>
+
+    <h2>All Bookings for this room:</h2>
+    <ol>
+    {% for booking in booking_data%}
+        {%if booking.2 >= today%}
+        <li>{{booking.2|date:"d.m.Y"}}</li>
+        {%endif%}
+    {%endfor%}
+    </ol>
+    <h3><a href="http://127.0.0.1:8000/room/modify/{{selected_room_id}}">Edit This Room</a></h3>
+    <h3><a href="http://127.0.0.1:8000/room/delete/{{selected_room_id}}">Delete This Room</a></h3>
+    <h3><a href="http://127.0.0.1:8000/room/reserve/{{selected_room_id}}">Reserve This Room</a></h3>
+
+</main>
+</body>
+</html>

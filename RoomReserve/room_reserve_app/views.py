@@ -1,14 +1,18 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, reverse, HttpResponseRedirect
 from django.http import HttpResponse
 from django.views import View
 from .models import Room, ReserveRoom
 from django.db import IntegrityError, DataError
-from datetime import datetime
+from datetime import datetime, date, timedelta
+from django.contrib import messages
 
 # Create your views here.
 
 
 rooms = Room.objects.all().values_list()
+today = date.today()
+def redirect_room_list():
+    return redirect("http://127.0.0.1:8000/room/list")
 # Define a class-based view for the home page
 class HomePage(View):
     """
@@ -35,7 +39,24 @@ class RoomList(View):
 
         # If there are rooms, render the room list with the rooms context
         if rooms:
-            ctx = {"rooms": rooms}
+            room_booking_data = ReserveRoom.objects.all().values_list()
+            room_booking_id_list = [x[1] for x in list(room_booking_data)]
+            room_booking_id_set = set(room_booking_id_list)
+            room_booking_date_list = [[x[1],x[2]] for x in list(room_booking_data)]
+            room_booking_dict = {}
+            for elem in room_booking_date_list:
+                if elem[0] in room_booking_dict:
+                    room_booking_dict[elem[0]].append(elem[1])
+                else:
+                    room_booking_dict[elem[0]] = [elem[1]]
+
+            ctx = {"rooms": rooms,
+                   "today": today,
+                   "room_booking_id_list": room_booking_id_list,
+                   "room_booking_date_list": room_booking_date_list,
+                   "room_booking_id_set":room_booking_id_set,
+                   "room_booking_dict":room_booking_dict,
+                   }
             return render(request, "room-list.html", ctx)
         # If there are no rooms, render the room list with a message context
         else:
@@ -99,7 +120,7 @@ class DeleteRoom(View):
         Deletes a room with the given ID.
         """
         Room.objects.filter(pk=room_id).delete()
-        return redirect('http://127.0.0.1:8000/room/list')
+        redirect_room_list()
 
 
 class ModifyRoom(View):
@@ -130,28 +151,31 @@ class ModifyRoom(View):
                 if old_room_name == new_room_name:
                     Room.objects.filter(pk=room_id).update(room_name=new_room_name, room_capacity=new_room_capacity,
                                                            projector_available=new_projector_available)
-                    ctx = {"message": "Changes made successfully",
-                           "rooms": rooms}
-                    return render(request, "room-list.html", ctx)
+                    messages.success(request, "Changes made successfully")
+                    redirect_room_list()
+
                 else:
                     if not Room.objects.filter(room_name = new_room_name):
                         Room.objects.filter(pk = room_id).update(room_name = new_room_name, room_capacity = new_room_capacity,
                                                                  projector_available = new_projector_available)
-                        ctx = {"message" : "Changes made successfully",
-                               "rooms":rooms}
-                        return render(request,"room-list.html", ctx)
+
+                        messages.success(request, "Changes made successfully")
+                        redirect_room_list()
+
 
                     else:
-                        ctx = {"message": "Name already reserved!"}
-                        return render(request, 'room-list.html', ctx)
+                        messages.success(request, "Name already reserved!")
+                        redirect_room_list()
+
             else:
-                ctx = {"message": "Capacity needs to be a positive  number and cannot be 0"}
-                return render(request, 'room-list.html', ctx)
+                messages.success(request, "Capacity needs to be a positive  number and cannot be 0")
+                redirect_room_list()
+
         except (IntegrityError, ValueError, DataError):
-            ctx = {"message" : "Changes were not made. Possible reasons: empty fields, name taken, "
-                               "max capacity exceeded, capacity not a positive number or 0",
-                   "rooms":rooms}
-            return render(request, "room-list.html", ctx)
+            messages.success(request, "Changes were not made. Possible reasons: empty fields, name taken, "
+                               "max capacity exceeded, capacity not a positive number or 0")
+            redirect_room_list()
+
 
 
 def future_date(given_date):
@@ -159,8 +183,7 @@ def future_date(given_date):
     Returns True if the given date is in the future, False otherwise.
     """
     compare_date = datetime.strptime(given_date,"%Y-%m-%d")
-    return datetime.today() < compare_date
-
+    return datetime.today() <= compare_date + timedelta(days=1)
 
 class ReservingRoom(View):
     def get(self, request, room_id):
@@ -197,19 +220,69 @@ class ReservingRoom(View):
         reservation_date = request.POST.get('room_date')
         comment = request.POST.get('room_comment')
 
-        if future_date(reservation_date):
-            if not ReserveRoom.objects.filter(date=reservation_date):
+        try:
+            if future_date(reservation_date) or reservation_date == today:
                 ReserveRoom.objects.create(date=reservation_date, comment=comment, room_id_id=room_id)
-                ctx = {"message": f"You have successfully reserved room '{room_name}' on {reservation_date}",
-                       "rooms": rooms}
-                return render(request, "room-list.html", ctx)
+
+                messages.success(request, "You have successfully reserved room !")
+                return HttpResponseRedirect(reverse('room-list'))
+
+
             else:
-                ctx = {"message": "Reservation failed, room already reserved on that date",
-                       "rooms": rooms}
-                return render(request, "room-list.html", ctx)
-        else:
-            ctx = {"message": "Reservation failed, reservation date in the past",
-                   "rooms": rooms}
-            return render(request, "room-list.html", ctx)
+                messages.success(request, "Reservation failed, reservation date in the past")
+                return HttpResponseRedirect(reverse('room-list'))
+
+
+        except IntegrityError:
+            messages.success(request, "Room already reserved on that date")
+            return HttpResponseRedirect(reverse('room-list'))
+
+
+
+class ShowRoom(View):
+    def get(self, request, room_id):
+        """
+        Handle GET requests to the view.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            room_id (int): The ID of the room to display details for.
+
+        Returns:
+            An HTTP response object containing the rendered template with the room details.
+        """
+        # Retrieve the room object from the database
+        room_object = Room.objects.filter(id=room_id).values_list()
+        room_tuple = room_object[0]
+
+        # Extract the relevant details from the room tuple
+        selected_room_id = room_tuple[0]
+        selected_room_name = room_tuple[1]
+        selected_room_capacity = room_tuple[2]
+        selected_room_projector = room_tuple[3]
+
+        # Retrieve the booking data for the selected room
+        booking_data = ReserveRoom.objects.filter(room_id_id=room_id).values_list()
+        booking_data_list = list(booking_data)
+        booking_data_days = [x[2] for x in booking_data_list]
+
+        # Generate a list of dates for the next seven days, starting from today
+
+        next_seven_days = [date.today() + timedelta(days=x) for x in range(7)]
+
+        # Build the context dictionary to pass to the template
+        ctx = {
+            "selected_room_id": selected_room_id,
+            "selected_room_name": selected_room_name,
+            "selected_room_capacity": selected_room_capacity,
+            "selected_room_projector": selected_room_projector,
+            "booking_data": booking_data,
+            "today": today,
+            "next_seven_days": next_seven_days,
+            "booking_data_days": booking_data_days,
+        }
+
+        # Render the template with the context dictionary and return the HTTP response
+        return render(request, "show-room.html", ctx)
 
 
