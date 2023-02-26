@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<header>
+    <h1>Reserve room '{{message}}'</h1>
+    <h6><a href="http://127.0.0.1:8000">HOME</a></h6>
+    <h6><a href="http://127.0.0.1:8000/room/list">Rooms List</a></h6>
+    <h6><a href="http://127.0.0.1:8000/room/new">Create New Room</a></h6>
+</header>
+
+<main>
+    <h3>
+    <form method="POST">
+        {%csrf_token%}
+        <label>
+            When do you need the room?<br>
+            <input type="date" name="room_date" />
+        </label><br>
+        Comment<br>
+        <input type="text" name="room_comment">
+
+
+      <p><button>Submit</button></p>
+    </form>
+    </h3>
+
+</main>
+</body>
+</html>
+<!--action="http://127.0.0.1:8000/room/list"-->
