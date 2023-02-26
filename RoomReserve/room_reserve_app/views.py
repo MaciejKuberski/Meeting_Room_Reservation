@@ -35,9 +35,9 @@ class RoomList(View):
         GET request method for rendering the list of all available rooms or a message if there are no rooms
         """
         # Get all rooms from the database
-        rooms = Room.objects.all().values_list()
 
         # If there are rooms, render the room list with the rooms context
+        rooms = Room.objects.all().values_list()
         if rooms:
             room_booking_data = ReserveRoom.objects.all().values_list()
             room_booking_id_list = [x[1] for x in list(room_booking_data)]
@@ -92,20 +92,31 @@ class NewRoom(View):
                                      room_capacity=room_capacity,
                                      projector_available=projector_available)
                 # Render the new-room page with a success message
-                ctx = {"message": "Room Added!"}
-                return render(request, 'new-room.html', ctx)
+
+                messages.success(request, "Room Added!")
+                return redirect("room-list")
+                # ctx = {"message": "Room Added!"}
+                # return render(request, 'new-room.html', ctx)
             else:
                 # Render the new-room page with an error message if the room capacity is not a positive integer
-                ctx = {"message": "Capacity needs to be a positive number and cannot be 0"}
-                return render(request, 'new-room.html', ctx)
+                messages.success("Capacity needs to be a positive number and cannot be 0")
+                return redirect("room-list")
+
+                # ctx = {"message": "Capacity needs to be a positive number and cannot be 0"}
+                # return render(request, 'new-room.html', ctx)
 
         # Catch errors if the room information is not valid
         except (IntegrityError, ValueError, DataError):
             # Render the new-room page with an error message
-            ctx = {"message": "Wrong Input, room was NOT added, possible reasons:",
-                   "reasons": ("Fields cannot be empty","Room with that name already exists",
-                               "Capacity cannot be higher than 32767 ")}
-            return render(request, 'new-room.html', ctx)
+            messages.success(request, "Wrong Input, room was NOT added, possible reasons: "
+                                      "fields cannot be empty, room with that name already exists, "
+                                      "capacity cannot be higher than 32767 ")
+            return redirect("room-list")
+
+            # ctx = {"message": "Wrong Input, room was NOT added, possible reasons:",
+            #        "reasons": ("Fields cannot be empty","Room with that name already exists",
+            #                    "Capacity cannot be higher than 32767 ")}
+            # return render(request, 'new-room.html', ctx)
 
 
 
@@ -120,7 +131,7 @@ class DeleteRoom(View):
         Deletes a room with the given ID.
         """
         Room.objects.filter(pk=room_id).delete()
-        redirect_room_list()
+        return redirect('room-list')
 
 
 class ModifyRoom(View):
@@ -131,8 +142,8 @@ class ModifyRoom(View):
         """
         Renders the modify-room.html template with the room data for the given ID.
         """
-        room = Room.objects.filter(pk = room_id).values_list()
-        ctx = {"room" : room}
+        room = Room.objects.filter(pk=room_id).values_list()
+        ctx = {"room": room}
         return render(request, "modify-room.html", ctx)
 
     def post(self, request, room_id):
@@ -142,39 +153,44 @@ class ModifyRoom(View):
         new_room_name = request.POST.get('room_name')
         new_room_capacity = request.POST.get('room_capacity')
         new_projector_available = request.POST.get('projector_available')
-        old_room_name_object = Room.objects.filter(pk = room_id).values_list()
+        old_room_name_object = Room.objects.filter(pk=room_id).values_list()
         old_room_name_tuple = old_room_name_object[0]
         old_room_name = old_room_name_tuple[1]
+        room = Room.objects.filter(pk=room_id).values_list()
 
         try:
             if int(new_room_capacity) > 0:
                 if old_room_name == new_room_name:
-                    Room.objects.filter(pk=room_id).update(room_name=new_room_name, room_capacity=new_room_capacity,
-                                                           projector_available=new_projector_available)
-                    messages.success(request, "Changes made successfully")
-                    redirect_room_list()
-
+                    Room.objects.filter(pk=room_id).update(
+                        room_name=new_room_name,
+                        room_capacity=new_room_capacity,
+                        projector_available=new_projector_available,
+                    )
                 else:
-                    if not Room.objects.filter(room_name = new_room_name):
-                        Room.objects.filter(pk = room_id).update(room_name = new_room_name, room_capacity = new_room_capacity,
-                                                                 projector_available = new_projector_available)
+                    # Check if the new room name already exists
+                    if Room.objects.filter(room_name=new_room_name).exists():
+                        ctx = {"message": "Room with that name already exists"}
+                        return render(request, "modify-room.html", ctx)
+                    # Update the room information
+                    Room.objects.filter(pk=room_id).update(
+                        room_name=new_room_name,
+                        room_capacity=new_room_capacity,
+                        projector_available=new_projector_available,
+                    )
+                return redirect("room-list")
 
-                        messages.success(request, "Changes made successfully")
-                        redirect_room_list()
-
-
-                    else:
-                        messages.success(request, "Name already reserved!")
-                        redirect_room_list()
-
+            # If the new room capacity is not a positive integer, render the modify-room page with an error message
             else:
-                messages.success(request, "Capacity needs to be a positive  number and cannot be 0")
-                redirect_room_list()
+                messages.success(request, "Capacity needs to be a positive number and cannot be 0")
+                return redirect("room-list")
 
+
+        # If there is an error, render the modify-room page with an error message
         except (IntegrityError, ValueError, DataError):
-            messages.success(request, "Changes were not made. Possible reasons: empty fields, name taken, "
-                               "max capacity exceeded, capacity not a positive number or 0")
-            redirect_room_list()
+            messages.success(request,"Changes were not made.Possible reasons: empty fields, name taken, "
+                                     "max capacity exceeded, capacity not a positive number or 0")
+            return redirect("room-list")
+
 
 
 
@@ -189,28 +205,27 @@ class ReservingRoom(View):
     def get(self, request, room_id):
         """
         Render the reservation form.
-
         Args:
             request: A request object.
             room_id (int): The ID of the room to reserve.
-
         Returns:
             A rendered HTTP response with the reservation form.
         """
         room_name_object = Room.objects.filter(id=room_id).values_list()
         room_name_tuple = room_name_object[0]
         room_name = room_name_tuple[1]
-        ctx = {"message": room_name}
+        booking_data = ReserveRoom.objects.filter(room_id_id=room_id).values_list()
+        ctx = {"message": room_name,
+               "booking_data":booking_data,
+               "today":today}
         return render(request, "reserve-room.html", ctx)
 
     def post(self, request, room_id):
         """
         Handle reservation form submission.
-
         Args:
             request: A request object.
             room_id (int): The ID of the room to reserve.
-
         Returns:
             A rendered HTTP response with the result of the reservation attempt.
         """
@@ -219,6 +234,7 @@ class ReservingRoom(View):
         room_name = room_name_tuple[1]
         reservation_date = request.POST.get('room_date')
         comment = request.POST.get('room_comment')
+
 
         try:
             if future_date(reservation_date) or reservation_date == today:
@@ -243,11 +259,9 @@ class ShowRoom(View):
     def get(self, request, room_id):
         """
         Handle GET requests to the view.
-
         Args:
             request (HttpRequest): The HTTP request object.
             room_id (int): The ID of the room to display details for.
-
         Returns:
             An HTTP response object containing the rendered template with the room details.
         """
@@ -284,5 +298,3 @@ class ShowRoom(View):
 
         # Render the template with the context dictionary and return the HTTP response
         return render(request, "show-room.html", ctx)
-
-

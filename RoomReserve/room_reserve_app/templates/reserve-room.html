@@ -27,10 +27,17 @@
 
 
       <p><button>Submit</button></p>
+      <h2>All Bookings for this room:</h2>
+      <ol>
+         {% for booking in booking_data%}
+         {%if booking.2 >= today%}
+         <li>{{booking.2|date:"d.m.Y"}}</li>
+         {%endif%}
+         {%endfor%}
+      </ol>
     </form>
     </h3>
 
 </main>
 </body>
 </html>
-<!--action="http://127.0.0.1:8000/room/list"-->
